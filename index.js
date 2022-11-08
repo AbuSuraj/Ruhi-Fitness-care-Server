@@ -16,13 +16,27 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run () {
     try {
         const serviceCollection = client.db('ruhiFitnessDB').collection('services');
-
+    // read data from db for home (3 services)
         app.get('/services', async (req, res) => {
+            const query = {}
+            const cursor = serviceCollection.find(query);
+            const services = await cursor.limit(3).toArray();
+            res.send(services);
+        });
+    // read data from db for all services 
+        app.get('/allservices', async (req, res) => {
             const query = {}
             const cursor = serviceCollection.find(query);
             const services = await cursor.toArray();
             res.send(services);
         });
+        // read particular data from db 
+        app.get("/services/:id", async(req,res) =>{
+            const id = req.params.id;
+            const query = { _id: ObjectId(id)};
+            const service = await serviceCollection.findOne(query);
+            res.send(service)
+        })
     }
     finally {}
 }
