@@ -50,7 +50,13 @@ async function run () {
             const result = await reviewCollection.insertOne(review);
             res.send(result)
         })
-        
+        // read review from db  
+        app.get('/reviews', async (req, res) => {
+            const query = {}
+            const cursor = reviewCollection.find(query);
+            const reviews = await cursor.toArray();
+            res.send(reviews);
+        });
     }
     finally {}
 }
