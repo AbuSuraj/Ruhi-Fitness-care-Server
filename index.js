@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 5000;
@@ -13,10 +14,33 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@clu
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+function verifyJWT(req, res, next){
+    const authHeader = req.headers.authorization;
+
+    if(!authHeader){
+        return res.status(401).send({message: 'unauthorized access'});
+    }
+    const token = authHeader.split(' ')[1];
+
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function(err, decoded){
+        if(err){
+            return res.status(403).send({message: 'Forbidden access'});
+        }
+        req.decoded = decoded;
+        next();
+    })
+}
+
 async function run () {
     try {
         const serviceCollection = client.db('ruhiFitnessDB').collection('services');
         const reviewCollection = client.db('ruhiFitnessDB').collection('reviews');
+
+        app.post('/jwt', (req, res) =>{
+            const user = req.body;
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1d'})
+            res.send({token})
+        }) 
     // read data from db for home (3 services)
         app.get('/services', async (req, res) => {
             const query = {}
@@ -68,9 +92,18 @@ async function run () {
 
         // reviews api 
 
-        app.get('/my-reviews/:email', async(req,res) =>{
-            
-            const query = {email: req.params.email}
+        app.get('/my-reviews/:email',verifyJWT, async(req,res) =>{
+            const decoded = req.decoded;
+            if(decoded.email !== req.params.email){
+                res.status(403).send({message: 'unauthorized access'})
+            }
+            // const query = {email: req.params.email}
+            let query = {};
+            if (req.params.email) {
+                query = {
+                    email: req.params.email
+                }
+            }
             const cursor = reviewCollection.find(query);
             const reviews = await cursor.toArray();
             res.send(reviews);
