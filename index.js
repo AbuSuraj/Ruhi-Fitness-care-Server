@@ -58,6 +58,13 @@ async function run () {
             const reviews = await cursor.toArray();
             res.send(reviews);
         });
+        app.get('/update-review/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const cursor = reviewCollection.find(query);
+            const reviews = await cursor.toArray();
+            res.send(reviews);
+        });
 
         // reviews api 
 
@@ -75,6 +82,26 @@ async function run () {
             const result = await reviewCollection.deleteOne(query);
             res.send(result);
         })
+
+         
+        // update
+      app.put("/my-review/:id", async(req,res) =>{
+        const id = req.params.id ;
+        const filter = { _id:ObjectId(id)};
+
+        const review = req.body;
+        const option = { upsert: true};
+        const updateReview = {
+            $set: {
+                text: review.text,
+            },
+        };
+        const result = await reviewCollection.updateOne(
+            filter, updateReview, option
+        );
+        res.send(result)
+      })
+
 
     }
     finally {}
