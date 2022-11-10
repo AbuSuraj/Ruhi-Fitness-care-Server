@@ -49,14 +49,14 @@ async function run() {
     app.get("/services", async (req, res) => {
       const query = {};
       const cursor = serviceCollection.find(query);
-      const services = await cursor.sort({ _id: -1 }).limit(3).toArray();
+      const services = await cursor.sort({ created: -1 }).limit(3).toArray();
       res.send(services);
     });
     // read data from db for all services
     app.get("/allservices", async (req, res) => {
       const query = {};
       const cursor = serviceCollection.find(query);
-      const services = await cursor.sort({ _id: -1 }).toArray();
+      const services = await cursor.sort({ created: -1 }).toArray();
       res.send(services);
     });
     // read particular data from db
